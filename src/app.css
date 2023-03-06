@@ -1,11 +1,18 @@
 :root {
   --dark-gray: #242424;
+  --light-gray: #34363c;
+  --dead: rgb(255, 34, 34);
+  --alive: rgb(109, 255, 37);
+  --unknown: #b1b1b1;
+  --male: rgb(101, 175, 255);
+  --female: pink;
+  --genderless: rgb(109, 250, 166);
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
   background-color: var(--dark-gray);
 
   font-synthesis: none;
@@ -28,11 +35,15 @@ html {
   min-height: 100dvh;
   min-height: 100vh;
 }
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 #app {
   display: flex;
   flex-direction: column;
   row-gap: 3rem;
+  overflow: hidden;
 }
-
-
-

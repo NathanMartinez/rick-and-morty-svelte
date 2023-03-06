@@ -2,97 +2,119 @@
 	import { onMount } from 'svelte'
 
 	import Character from './lib/Character.svelte'
+	import rickAndMorty from './assets/rick_and_morty.svg'
 
-	type Info = {
-		count: number // The length of the response
-		pages: number // The amount of pages
-		next: string // (url)	Link to the next page (if it exists)
-		prev: string // (url)	Link to the previous page (if it exists)
+	import type { InfoType, CharacterType, FetchResultType } from './typedefs'
+	import { parseCharactersUnknown } from './utilities'
+
+	let info_data: InfoType = {
+		count: 826,
+		pages: 42,
+		next: 'https://rickandmortyapi.com/api/character/?page=2',
+		prev: null,
 	}
-
-	type Character = {
-		id: number // The id of the character.
-		name: string // The name of the character.
-		status: 'Alive' | 'Dead' | 'unknown' | 'Unknown' // The status of the character ('Alive', 'Dead' or 'unknown').
-		species: string // The species of the character.
-		type: string // The type or subspecies of the character.
-		gender: 'Female' | 'Male' | 'Genderless' | 'unknown' | 'Unknown' // The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').
-		origin: {
-			name: string
-			url: string
-		} // Name and link to the character's origin location.
-		location: {
-			name: string
-			url: string
-		} // Name and link to the character's last known location endpoint.
-		image: string // (url)	Link to the character's image. All images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.
-		episode: string[] // (urls)	List of episodes in which this character appeared.
-		url: string // (url)	Link to the character's own URL endpoint.
-		created: string // Time at which the character was created in the database.
-	}
-
-	let info_data: Info
-	let characters: Character[] = []
+	let characters: CharacterType[] = []
+	let page = 1
+	let loading = false
 
 	async function getCharacters() {
-		const res = await fetch(import.meta.env.VITE_API_BASE_URL + 'character')
-		const json = await res.json()
-		return json
-	}
-
-	function parseCharacters(charactersArray: Character[]) {
-		return charactersArray.map((character) => {
-			if (character.status === 'unknown') {
-				character.status = 'Unknown'
-			}
-			if (character.gender === 'unknown') {
-				character.gender = 'Unknown'
-			}
-			return character
-		})
+		const res = await fetch(
+			`${import.meta.env.VITE_API_BASE_URL}character/?page=${page}`
+		)
+		const { info, results } = (await res.json()) as FetchResultType
+		parseCharactersUnknown(results)
+		characters = results
+		info_data = info
 	}
 
 	onMount(async () => {
-		const { info, results } = await getCharacters()
-		characters = parseCharacters(results)
-		info_data = info
+		loading = true
+		getCharacters()
+		loading = false
 	})
 </script>
 
 <nav>
+	<img src={rickAndMorty} alt="Rick and Morty" />
 	<h1>Rick and Morty Client</h1>
 </nav>
 
 <main>
+	{#if loading}
+		<h1>Loading...</h1>
+	{/if}
 	{#each characters as character (character.id)}
 		<Character {character} />
 	{/each}
 </main>
 
 <footer>
-	Created by: <a href="https://github.com/NathanMartinez">Nathan Martinez</a>
+	<button
+		disabled={!info_data.prev}
+		on:click={() => {
+			window.scrollTo({ top: 0, behavior: 'smooth' })
+			page--
+			getCharacters()
+		}}>prev</button
+	>
+	<p>{page}/{info_data.pages}</p>
+	<button
+		disabled={!info_data.next}
+		on:click={() => {
+			window.scrollTo({ top: 0, behavior: 'smooth' })
+			page++
+			getCharacters()
+		}}>next</button
+	>
+	<!-- Created by: <a href="https://github.com/NathanMartinez">Nathan Martinez</a> -->
 </footer>
 
 <style>
 	nav,
+	main,
 	footer {
 		padding: 1rem;
 	}
+
+	nav,
+	main {
+		gap: 1rem;
+	}
+
 	nav {
+		display: flex;
+		align-items: center;
 		background-color: #fff;
 		color: var(--dark-gray);
 	}
-	main {
-		display: grid;
-		justify-content: center;
-		grid-template-columns: repeat(auto-fit, 300px);
-		gap: 1rem;
+
+	nav > img {
+		height: 3rem;
 	}
+
+	main {
+		display: flex;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
 	footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		text-align: center;
 	}
-	footer a {
-		text-decoration: none;
+	button {
+		padding: 0.5rem 1rem;
+		background-color: var(--light-gray);
+		border: none;
 		color: #fff;
+	}
+	button:hover:not(:disabled) {
+		cursor: pointer;
+		filter: brightness(1.25);
+	}
+	button:disabled {
+		filter: opacity(0.5);
 	}
 </style>
