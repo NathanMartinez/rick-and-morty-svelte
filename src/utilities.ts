@@ -1,4 +1,4 @@
-import type { CharacterType } from './typedefs'
+import type { CharacterType } from './types'
 
 export function parseCharactersUnknown(results: CharacterType[]) {
 	results.map((character) => {

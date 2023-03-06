@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import type { CharacterType } from '../typedefs'
+	import type { CharacterType } from '../types'
 	export let character: CharacterType
 </script>
 

@@ -4,7 +4,7 @@
 	import Character from './lib/Character.svelte'
 	import rickAndMorty from './assets/rick_and_morty.svg'
 
-	import type { InfoType, CharacterType, FetchResultType } from './typedefs'
+	import type { InfoType, CharacterType, FetchResultType } from './types'
 	import { parseCharactersUnknown } from './utilities'
 
 	let info_data: InfoType = {
