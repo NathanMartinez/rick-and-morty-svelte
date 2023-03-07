@@ -4,34 +4,36 @@
 	import Character from './lib/Character.svelte'
 	import rickAndMorty from './assets/rick_and_morty.svg'
 
-	import type { InfoType, CharacterType, FetchResultType } from './types'
-	import { parseCharactersUnknown } from './utilities'
+	import { ApolloClient, InMemoryCache, gql } from '@apollo/client/core'
+	import { setClient, query } from 'svelte-apollo'
 
-	let info_data: InfoType = {
-		count: 826,
-		pages: 42,
-		next: 'https://rickandmortyapi.com/api/character/?page=2',
-		prev: null,
-	}
-	let characters: CharacterType[] = []
-	let page = 1
-	let loading = false
-
-	async function getCharacters() {
-		const res = await fetch(
-			`${import.meta.env.VITE_API_BASE_URL}character/?page=${page}`
-		)
-		const { info, results } = (await res.json()) as FetchResultType
-		parseCharactersUnknown(results)
-		characters = results
-		info_data = info
-	}
-
-	onMount(async () => {
-		loading = true
-		getCharacters()
-		loading = false
+	const client = new ApolloClient({
+		uri: import.meta.env.VITE_API_BASE_URL,
+		cache: new InMemoryCache(),
 	})
+	setClient(client)
+
+	const CHARACTERS = gql`
+		query Characters($page: Int) {
+			characters(page: $page) {
+				info {
+					pages
+					prev
+					next
+				}
+				results {
+					id
+					name
+				}
+			}
+		}
+	`
+	let page = 1
+	const characters = query(CHARACTERS, { variables: { page } })
+
+	$: characters.refetch({ page })
+
+	console.log($characters)
 </script>
 
 <nav>
@@ -40,32 +42,20 @@
 </nav>
 
 <main>
-	{#if loading}
-		<h1>Loading...</h1>
-	{/if}
-	{#each characters as character (character.id)}
-		<Character {character} />
-	{/each}
+	<ul>
+		{#if $characters.loading}
+			<li>Loading...</li>
+		{:else if $characters.error}
+			<li>ERROR: {$characters.error.message}</li>
+		{:else}
+			{#each $characters.data?.characters?.results as character (character.id)}
+				<li>{character.name}</li>
+			{/each}
+		{/if}
+	</ul>
 </main>
 
 <footer>
-	<button
-		disabled={!info_data.prev}
-		on:click={() => {
-			window.scrollTo({ top: 0, behavior: 'smooth' })
-			page--
-			getCharacters()
-		}}>prev</button
-	>
-	<p>{page}/{info_data.pages}</p>
-	<button
-		disabled={!info_data.next}
-		on:click={() => {
-			window.scrollTo({ top: 0, behavior: 'smooth' })
-			page++
-			getCharacters()
-		}}>next</button
-	>
 	<!-- Created by: <a href="https://github.com/NathanMartinez">Nathan Martinez</a> -->
 </footer>
 
