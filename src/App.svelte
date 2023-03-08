@@ -94,7 +94,9 @@
 				window.scrollTo({ top: 0, behavior: 'smooth' })
 			}}>Prev</button
 		>
-		<p>{variables.page}/{$result.data?.characters.info.pages || '0'}</p>
+		{#if $result.data?.characters.info.pages}
+			<p>{variables.page}/{$result.data?.characters.info.pages}</p>
+		{/if}
 		<button
 			disabled={!$result.data?.characters.info.next}
 			on:click={() => {
@@ -139,7 +141,9 @@
 		align-items: center;
 		gap: 0.5rem;
 	}
-
+	.search__filter {
+		flex-wrap: wrap;
+	}
 	.title__section > img {
 		height: 3rem;
 	}
@@ -169,10 +173,10 @@
 
 	main {
 		flex: 1;
-		display: flex;
+		display: grid;
 		justify-content: center;
-		align-items: center;
-		flex-wrap: wrap;
+		align-content: center;
+		grid-template-columns: repeat(auto-fit, minmax(275px, 300px));
 	}
 
 	footer {

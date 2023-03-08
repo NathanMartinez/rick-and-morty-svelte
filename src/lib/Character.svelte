@@ -35,7 +35,6 @@
 		background-color: var(--light-gray);
 		overflow: hidden;
 		border-radius: 0.25rem;
-		width: clamp(200px, 300px, 400px);
 	}
 
 	.card__body {

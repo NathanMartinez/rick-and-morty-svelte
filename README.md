@@ -1,6 +1,10 @@
 # Rick and Morty Client
 
-## I created a simple frontend client for the [Rick and Morty API](https://rickandmortyapi.com/)
+This is a simple frontend client for the [Rick and Morty API](https://rickandmortyapi.com/)
+
+### Links
+
+- Live Site URL: [Github Pages Site](https://nathanmartinez.github.io/fm_base_apparel_coming_soon/)
 
 ### Built with
 
