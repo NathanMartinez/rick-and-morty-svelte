@@ -1,78 +1,120 @@
 <script lang="ts">
-	import { onMount } from 'svelte'
-
-	import Character from './lib/Character.svelte'
+	import { setClient, query, type ReadableQuery } from 'svelte-apollo'
+	import { CHARACTERS_BY_PAGE } from './queries'
+	import type { FetchResultType } from './types'
 	import rickAndMorty from './assets/rick_and_morty.svg'
+	import Character from './lib/Character.svelte'
+	import client from './client'
 
-	import type { InfoType, CharacterType, FetchResultType } from './types'
-	import { parseCharactersUnknown } from './utilities'
+	setClient(client)
 
-	let info_data: InfoType = {
-		count: 826,
-		pages: 42,
-		next: 'https://rickandmortyapi.com/api/character/?page=2',
-		prev: null,
-	}
-	let characters: CharacterType[] = []
-	let page = 1
-	let loading = false
-
-	async function getCharacters() {
-		const res = await fetch(
-			`${import.meta.env.VITE_API_BASE_URL}character/?page=${page}`
-		)
-		const { info, results } = (await res.json()) as FetchResultType
-		parseCharactersUnknown(results)
-		characters = results
-		info_data = info
+	const variables = {
+		page: 1,
+		name: '',
+		gender: '',
+		status: '',
 	}
 
-	onMount(async () => {
-		loading = true
-		getCharacters()
-		loading = false
+	let showFilters = false
+
+	const result: ReadableQuery<FetchResultType> = query(CHARACTERS_BY_PAGE, {
+		variables,
 	})
+
+	$: result.refetch(variables)
 </script>
 
 <nav>
-	<img src={rickAndMorty} alt="Rick and Morty" />
-	<h1>Rick and Morty Client</h1>
-</nav>
-
-<main>
-	{#if loading}
-		<h1>Loading...</h1>
+	<div class="title__section">
+		<img src={rickAndMorty} alt="Rick and Morty" />
+		<h1>Rick and Morty Client</h1>
+	</div>
+	<div class="search__filter">
+		<input
+			type="text"
+			placeholder="Rick Sanchez"
+			bind:value={variables.name}
+			on:change={() => (variables.page = 1)}
+		/>
+		<button
+			on:click={() => {
+				showFilters = !showFilters
+			}}>Filters</button
+		>
+	</div>
+	<code class="count">
+		Characters: {$result.data?.characters.info.count || '0'}
+	</code>
+	{#if showFilters}
+		<div class="filters" on:mouseleave={() => (showFilters = false)}>
+			<select
+				name="gender"
+				id="gender"
+				bind:value={variables.gender}
+				on:change={() => (variables.page = 1)}
+			>
+				<option value="">Gender</option>
+				<option value="male">Male</option>
+				<option value="female">Female</option>
+			</select>
+			<select
+				name="status"
+				id="status"
+				bind:value={variables.status}
+				on:change={() => (variables.page = 1)}
+			>
+				<option value="">Status</option>
+				<option value="alive">Alive</option>
+				<option value="dead">Dead</option>
+				<option value="unknown">Unknown</option>
+			</select>
+		</div>
 	{/if}
-	{#each characters as character (character.id)}
-		<Character {character} />
-	{/each}
+</nav>
+<main>
+	{#if $result.loading}
+		<h2>Loading...</h2>
+	{:else if $result.error}
+		<h2>ERROR: {$result.error.message}</h2>
+	{:else if $result.data?.characters.results.length <= 0}
+		<h2>No Results</h2>
+	{:else}
+		{#each $result.data?.characters.results as character (character.id)}
+			<Character {character} />
+		{/each}
+	{/if}
 </main>
 
 <footer>
-	<button
-		disabled={!info_data.prev}
-		on:click={() => {
-			window.scrollTo({ top: 0, behavior: 'smooth' })
-			page--
-			getCharacters()
-		}}>prev</button
-	>
-	<p>{page}/{info_data.pages}</p>
-	<button
-		disabled={!info_data.next}
-		on:click={() => {
-			window.scrollTo({ top: 0, behavior: 'smooth' })
-			page++
-			getCharacters()
-		}}>next</button
-	>
-	<!-- Created by: <a href="https://github.com/NathanMartinez">Nathan Martinez</a> -->
+	<div class="pagination">
+		<button
+			disabled={!$result.data?.characters.info.prev}
+			on:click={() => {
+				variables.page -= 1
+				window.scrollTo({ top: 0, behavior: 'smooth' })
+			}}>Prev</button
+		>
+		<p>{variables.page}/{$result.data?.characters.info.pages || '0'}</p>
+		<button
+			disabled={!$result.data?.characters.info.next}
+			on:click={() => {
+				variables.page += 1
+				window.scrollTo({ top: 0, behavior: 'smooth' })
+			}}>Next</button
+		>
+	</div>
+	<div class="footer__info">
+		Created by: <a
+			href="https://github.com/NathanMartinez"
+			target="_blank"
+			rel="noreferrer">Nathan Martinez</a
+		>
+	</div>
 </footer>
 
 <style>
 	nav,
-	main,
-	footer {
+	main {
 		padding: 1rem;
 	}
 
@@ -82,39 +124,108 @@
 	}
 
 	nav {
+		position: relative;
 		display: flex;
-		align-items: center;
+		flex-direction: column;
 		background-color: #fff;
 		color: var(--dark-gray);
+		background-image: var(--nav-image);
+		text-align: center;
 	}
 
-	nav > img {
+	.title__section,
+	.search__filter {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.title__section > img {
 		height: 3rem;
 	}
 
+	.search__filter > input {
+		flex: 1;
+		background: transparent;
+		border: 2px solid var(--dark-gray);
+		border-radius: 0.25rem;
+		color: inherit;
+		font-size: 1rem;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+	}
+
+	nav .filters {
+		position: absolute;
+		right: 1rem;
+		top: calc(100% - 1rem);
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		background-color: var(--light-gray);
+		padding: 1rem;
+		border-radius: 0.25rem;
+	}
+
 	main {
+		flex: 1;
 		display: flex;
 		justify-content: center;
+		align-items: center;
 		flex-wrap: wrap;
 	}
 
 	footer {
+		text-align: center;
+		background-color: #fff;
+		color: var(--dark-gray);
+	}
+
+	.pagination,
+	.footer__info {
+		padding: 1rem;
+	}
+
+	.pagination {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		text-align: center;
 	}
-	button {
-		padding: 0.5rem 1rem;
+	.footer__info {
 		background-color: var(--light-gray);
-		border: none;
 		color: #fff;
 	}
+	.footer__info > a {
+		color: var(--male);
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+		background-color: var(--dark-gray);
+		border: none;
+		color: #fff;
+		border-radius: 0.25rem;
+	}
+
 	button:hover:not(:disabled) {
 		cursor: pointer;
-		filter: brightness(1.25);
+		background-color: var(--light-gray);
 	}
+
 	button:disabled {
 		filter: opacity(0.5);
+	}
+
+	@media (min-width: 50em) {
+		nav {
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+			gap: 3rem;
+		}
+		.search__filter {
+			flex: 1;
+			max-width: 50rem;
+		}
 	}
 </style>
