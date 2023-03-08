@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte'
 	import type { CharacterType } from '../types'
 	export let character: CharacterType
 </script>
@@ -24,7 +23,10 @@
 			<strong>Last known location:</strong>
 			{character.location.name}
 		</p>
-        <p><strong>First seen in:</strong></p>
+		<p>
+			<strong>First seen in:</strong>
+			{character.episode[0].name}
+		</p>
 	</div>
 </div>
 
@@ -62,34 +64,5 @@
 		background-repeat: no-repeat;
 		background-position: center;
 		background-size: cover;
-	}
-
-	code {
-		font-size: 0.9rem;
-		font-weight: 700;
-	}
-
-	.male {
-		color: var(--male);
-	}
-
-	.female {
-		color: var(--female);
-	}
-
-	.genderless {
-		color: var(--genderless);
-	}
-
-	.dead {
-		color: var(--dead);
-	}
-
-	.alive {
-		color: var(--alive);
-	}
-
-	.unknown {
-		color: var(--unknown);
 	}
 </style>
