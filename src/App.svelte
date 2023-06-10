@@ -229,6 +229,7 @@
 		}
 		.search__filter {
 			flex: 1;
+			min-width: 18rem;
 			max-width: 50rem;
 		}
 	}
